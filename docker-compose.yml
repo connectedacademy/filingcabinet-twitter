@@ -1,0 +1,17 @@
+version: '2'
+networks:
+  dev_ca-back-network:
+    external: true
+    
+services:
+  fc-twitter:
+    build: .
+    volumes:
+      - ./app:/usr/src/app/app
+      - ./test:/usr/src/app/test:ro
+    command: nodemon --debug=0.0.0.0:6060 -x "node --harmony" -L app.js
+    ports:
+      - "6060:6060"
+    networks: 
+      - dev_ca-back-network
+    env_file: .env
