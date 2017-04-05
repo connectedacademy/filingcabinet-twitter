@@ -30,7 +30,7 @@ module.exports = async function()
         });
 
 
-        logger.info('Filing Cabinet Twitter Started'); 
+        logger.info('Filing Cabinet - Twitter Started'); 
 
         // redis connection
         let redis = new Redis(process.env.REDIS_PORT, process.env.REDIS_HOST);
@@ -59,7 +59,7 @@ module.exports = async function()
 
         try
         {
-            await db.class.create('Credentials', '');   
+            await db.class.create('credentials', '');   
             logger.info("Created Credentials Class");    
         }
         catch (e)
@@ -69,7 +69,7 @@ module.exports = async function()
 
         try
         {
-            Credentials = await db.class.get('Credentials');
+            Credentials = await db.class.get('credentials');
         }
         catch (e)
         {
@@ -92,7 +92,7 @@ module.exports = async function()
                 let yml = yaml.safeLoad(temp);
 
                 logger.verbose('Getting Credentials for ' + yml.course.account);          
-                let creds = await db.select().from('Credentials')
+                let creds = await db.select().from('credentials')
                 .where({
                     account: yml.course.account
                 }).all();
@@ -123,8 +123,10 @@ module.exports = async function()
             user: "@tombartindale",
             hashtags: ['#brexit'],
             credentials:{
+                key: 'Mw5yOFGqH1hEybhqeXzNCNecO',
+                secret: 'cCnvByxi1xQV5USACc1tglpeMgAePkD5yZnC5A0CqEVKLu2TNa',
                 token:'17308978-yG8b4jCrWSZwQdZKfW5emKAdg1MiHPZskJUiZuNLq',
-                secret: '5AWdPXYyTky8kJNLyf3XoeBf8qzbY5o8HoFMdbWJaXVVi'
+                token_secret: '5AWdPXYyTky8kJNLyf3XoeBf8qzbY5o8HoFMdbWJaXVVi'
             }
         });
 
@@ -136,11 +138,11 @@ module.exports = async function()
             logger.info(log);
         });
         test.on('message',(message)=>{
-            logger.verbose('Message received',message.text);
+            logger.verbose('Message received',message.id_str);
             //normalise into message format
             let newmessage = {};
 
-            newmessage.id = message.id;
+            newmessage.id = message.id_str;
             newmessage._raw = message;
 
             newmessage.text = message.text;
@@ -150,6 +152,8 @@ module.exports = async function()
             newmessage.user = 'twitter_'+message.user.id;
             newmessage.lang = message.lang;
             newmessage.replyto = message.in_reply_to_status_id;
+
+            // logger.verbose(JSON.stringify(newmessage));
 
             //publish to redis pubsub
             redis.publish('messages', JSON.stringify(newmessage));

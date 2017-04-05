@@ -14,17 +14,17 @@ class TwitterReceiver extends EventEmitter
     async start()
     {
         this.client = new Twitter({
-            consumer_key: process.env.TWITTER_ACCESS_TOKEN,
-            consumer_secret: process.env.TWITTER_ACCESS_SECRET,
+            consumer_key: this.config.credentials.key,
+            consumer_secret: this.config.credentials.secret,
             access_token_key: this.config.credentials.token,
-            access_token_secret: this.config.credentials.secret
+            access_token_secret: this.config.credentials.token_secret
         });
 
 
         this.emit('log','Getting Initial Backlog for ' + this.config.hashtags.join(','));
         await this.backlog();
 
-        if (process.env.STREAM == true)
+        if (process.env.STREAM =='true')
         {
             //streaming feed
             let stream = this.client.stream('statuses/filter', {
@@ -60,7 +60,7 @@ class TwitterReceiver extends EventEmitter
             //go back in time and get the backlog for this seach term
             var tweets = await this.client.get('search/tweets', {
                 q: this.config.hashtags.join(','),
-                count: 5,
+                count: process.env.BACKLOG_LIMIT,
                 max_id: this.max_seen_id
             });
 
