@@ -90,25 +90,26 @@ module.exports = async function()
                 logger.verbose('Retrieving ' + w.url + '/config/structure.yml');          
                 let temp = await request.get(w.url + '/config/structure.yml');
                 let yml = yaml.safeLoad(temp);
-
-                logger.verbose('Getting Credentials for ' + yml.course.account);          
-                let creds = await db.select().from('credentials')
+                // console.log(yml);
+                logger.verbose('Getting Credentials for ' + yml.accounts);          
+                let creds = await db.select().from('user')
                 .where({
-                    account: yml.course.account
+                    account: yml.accounts
                 }).all();
 
                 if (creds.length > 0)
                 {
-                    var cred = _.first(creds);
-                    courses.push({
-                        user: yml.course.account,
-                        hashtags: yml.course.hashtags,
-                        credentials: cred
+                    _.each(creds,(cred)=>{
+                        courses.push({
+                            user: yml.accounts,
+                            hashtags: yml.hashtags,
+                            credentials: cred
+                        });
                     });
                 }
                 else
                 {
-                    logger.error("No credentials stored for " + yml.course.account);
+                    logger.error("No credentials stored for " + yml.accounts);
                 }
             }
             catch (e)
