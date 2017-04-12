@@ -150,7 +150,7 @@ module.exports = async function()
             newmessage.service = 'twitter';
             newmessage.createdAt = new Date(message.created_at);
             newmessage.entities = message.entities;
-            newmessage.user = 'twitter_'+message.user.id;
+            newmessage.user = message.user.id;
             newmessage.lang = message.lang;
             newmessage.replyto = message.in_reply_to_status_id;
 
