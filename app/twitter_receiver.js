@@ -8,6 +8,7 @@ class TwitterReceiver extends EventEmitter
     {
         super();
         this.config = config;
+        // console.log(config);
         this.max_seen_id = 0;
     }
 
@@ -17,22 +18,34 @@ class TwitterReceiver extends EventEmitter
             consumer_key: this.config.credentials.key,
             consumer_secret: this.config.credentials.secret,
             access_token_key: this.config.credentials.token,
-            access_token_secret: this.config.credentials.token_secret
+            access_token_secret: this.config.credentials.tokenSecret
         });
 
 
-        this.emit('log','Getting Initial Backlog for ' + this.config.hashtags.join(','));
+        this.emit('log','Getting Initial Backlog for ' + this.config.hashtags);
         await this.backlog();
 
         if (process.env.STREAM =='true')
         {
             //streaming feed
             let stream = this.client.stream('statuses/filter', {
-                track: this.config.hashtags.join(',')
+                track: this.config.hashtags
             });
 
             stream.on('data', (event)=> {
-                // console.log(event && event.text);
+                
+                if (event.delete)
+                {
+                    this.emit('delete',event);
+                    return;
+                }
+                
+                if (event.scrub_geo)
+                {
+                    this.emit('cleargeo',event);
+                    return;
+                }
+
                 this.emit('message',event);
                 //sets the last seen id
                 if (event.id > this.max_seen_id)
@@ -44,7 +57,7 @@ class TwitterReceiver extends EventEmitter
                 this.emit('error',err);
             });
 
-            this.emit('log','Streaming ' + this.config.hashtags.join(','));
+            this.emit('log','Streaming ' + this.config.hashtags);
         }
 
         setTimeout(()=>{
@@ -59,7 +72,7 @@ class TwitterReceiver extends EventEmitter
         {
             //go back in time and get the backlog for this seach term
             var tweets = await this.client.get('search/tweets', {
-                q: this.config.hashtags.join(','),
+                q: this.config.hashtags,
                 count: process.env.BACKLOG_LIMIT,
                 max_id: this.max_seen_id
             });

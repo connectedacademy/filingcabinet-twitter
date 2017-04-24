@@ -57,25 +57,6 @@ module.exports = async function()
         let db = server.use(process.env.ORIENTDB_DB)
         logger.info("Using database " + db.name);
 
-        try
-        {
-            await db.class.create('credentials', '');   
-            logger.info("Created Credentials Class");    
-        }
-        catch (e)
-        {
-            //already exists
-        }
-
-        try
-        {
-            Credentials = await db.class.get('credentials');
-        }
-        catch (e)
-        {
-            logger.error(e);
-        }
-
         // Obtain Twitter search terms and accounts
         logger.verbose('Retrieving ' + process.env.MASTER_REPO + 'config/courses.yml');          
         let whitelist_raw = await request.get(process.env.MASTER_REPO + '/config/courses.yml');
@@ -87,23 +68,29 @@ module.exports = async function()
             let w = whitelist.courses[k];
             try
             {
-                logger.verbose('Retrieving ' + w.url + '/config/structure.yml');          
-                let temp = await request.get(w.url + '/config/structure.yml');
+                logger.verbose('Retrieving ' + w.url + '/course/config/spec.yaml');          
+                let temp = await request.get(w.url + '/course/config/spec.yaml');
                 let yml = yaml.safeLoad(temp);
                 // console.log(yml);
-                logger.verbose('Getting Credentials for ' + yml.accounts);          
-                let creds = await db.select().from('user')
-                .where({
-                    account: yml.accounts
-                }).all();
+                logger.verbose('Getting Credentials for ' + yml.accounts);
+                // console.log(yml.accounts);      
+                let users = await db.query(
+                    'SELECT account_credentials,credentials, account FROM user WHERE service=:service AND account IN :accounts',
+                    {
+                        params: {
+                            service: 'twitter',
+                            accounts:yml.accounts
+                        }
+                    });
+                // console.log(users);
 
-                if (creds.length > 0)
+                if (users.length > 0)
                 {
-                    _.each(creds,(cred)=>{
+                    _.each(users,(user)=>{
                         courses.push({
-                            user: yml.accounts,
-                            hashtags: yml.hashtags,
-                            credentials: cred
+                            user: user.account,
+                            hashtags: yml.hashtag,
+                            credentials: _.extend(user.account_credentials,user.credentials)
                         });
                     });
                 }
@@ -120,53 +107,83 @@ module.exports = async function()
 
         let clients = [];
 
-        let test = new TwitterReceiver({
-            user: "@tombartindale",
-            hashtags: ['#brexit'],
-            credentials:{
-                key: 'Mw5yOFGqH1hEybhqeXzNCNecO',
-                secret: 'cCnvByxi1xQV5USACc1tglpeMgAePkD5yZnC5A0CqEVKLu2TNa',
-                token:'17308978-yG8b4jCrWSZwQdZKfW5emKAdg1MiHPZskJUiZuNLq',
-                token_secret: '5AWdPXYyTky8kJNLyf3XoeBf8qzbY5o8HoFMdbWJaXVVi'
-            }
-        });
+        // let test = new TwitterReceiver({
+        //     user: "@tombartindale",
+        //     hashtags: ['#brexit'],
+        //     credentials:{
+        //         key: 'Mw5yOFGqH1hEybhqeXzNCNecO',
+        //         secret: 'cCnvByxi1xQV5USACc1tglpeMgAePkD5yZnC5A0CqEVKLu2TNa',
+        //         token:'17308978-yG8b4jCrWSZwQdZKfW5emKAdg1MiHPZskJUiZuNLq',
+        //         token_secret: '5AWdPXYyTky8kJNLyf3XoeBf8qzbY5o8HoFMdbWJaXVVi'
+        //     }
+        // });
 
-        test.on('error',(err)=>{
-            logger.error(err);
-            process.exit(1);
-        });
-        test.on('log',(log)=>{
-            logger.info(log);
-        });
-        test.on('message',(message)=>{
-            logger.verbose('Message received',message.id_str);
-            //normalise into message format
-            let newmessage = {};
+        // test.on('error',(err)=>{
+        //     logger.error(err);
+        //     process.exit(1);
+        // });
+        // test.on('log',(log)=>{
+        //     logger.info(log);
+        // });
+        // test.on('delete',(message)=>{
+        //     logger.info("Delete Tweet",message);
+        // });
+        // test.on('scrubgeo',(message)=>{
+        //     logger.info("Scrub Geo on Tweet",message);            
+        // });
+        // test.on('message',(message)=>{
+        //     logger.verbose('Message received',message.id_str);
+        //     //normalise into message format
+        //     let newmessage = {};
 
-            newmessage.id = message.id_str;
-            newmessage._raw = message;
+        //     newmessage.message_id = message.id_str;
+        //     newmessage._raw = message;
 
-            newmessage.text = message.text;
-            newmessage.service = 'twitter';
-            newmessage.createdAt = new Date(message.created_at);
-            newmessage.entities = message.entities;
-            newmessage.user = message.user.id;
-            newmessage.lang = message.lang;
-            newmessage.replyto = message.in_reply_to_status_id;
+        //     newmessage.text = message.text;
+        //     newmessage.service = 'twitter';
+        //     newmessage.createdAt = new Date(message.created_at);
+        //     newmessage.entities = message.entities;
+        //     newmessage.user = message.user.id;
+        //     newmessage.lang = message.lang;
+        //     newmessage.replyto = message.in_reply_to_status_id;
 
-            // logger.verbose(JSON.stringify(newmessage));
+        //     // logger.verbose(JSON.stringify(newmessage));
 
-            //publish to redis pubsub
-            redis.publish('messages', JSON.stringify(newmessage));
-        });
-        test.start();
+        //     //publish to redis pubsub
+        //     redis.publish('messages', JSON.stringify(newmessage));
+        // });
+        // test.start();
+
+
+        //TODO: fill in above hardcoded logic for below
 
         logger.info('Created Client List for ' + courses.length + ' clients');             
         // Start a twitter receiver for each of the accounts
-        for (let course in courses) {
+        for (let course of courses) {
             let tmp = new TwitterReceiver(course);
             tmp.on('message',(message) => {
+                logger.verbose('Message received',message.id_str);
+                //normalise into message format
+                let newmessage = {};
 
+                newmessage.message_id = message.id_str;
+                newmessage._raw = message;
+
+                newmessage.text = message.text;
+                newmessage.service = 'twitter';
+                newmessage.createdAt = new Date(message.created_at);
+                newmessage.entities = message.entities;
+                newmessage.user = message.user.id;
+                newmessage.lang = message.lang;
+                newmessage.replyto = message.in_reply_to_status_id;
+
+                // logger.verbose(JSON.stringify(newmessage));
+
+                //publish to redis pubsub
+                redis.publish('messages', JSON.stringify(newmessage));
+            });
+            tmp.on('delete',(message)=>{
+                logger.info("Delete Tweet",message);
             });
             tmp.on('log',(log)=>{
                 logger.info(log);
@@ -179,7 +196,7 @@ module.exports = async function()
             tmp.start();
         };
         logger.info('Created ' + courses.length + ' Clients');
-        logger.info('Listening for Messages');        
+        logger.info('Listening for Messages');
     }
     catch (e)
     {
