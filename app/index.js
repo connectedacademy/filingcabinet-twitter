@@ -107,56 +107,6 @@ module.exports = async function()
 
         let clients = [];
 
-        // let test = new TwitterReceiver({
-        //     user: "@tombartindale",
-        //     hashtags: ['#brexit'],
-        //     credentials:{
-        //         key: 'Mw5yOFGqH1hEybhqeXzNCNecO',
-        //         secret: 'cCnvByxi1xQV5USACc1tglpeMgAePkD5yZnC5A0CqEVKLu2TNa',
-        //         token:'17308978-yG8b4jCrWSZwQdZKfW5emKAdg1MiHPZskJUiZuNLq',
-        //         token_secret: '5AWdPXYyTky8kJNLyf3XoeBf8qzbY5o8HoFMdbWJaXVVi'
-        //     }
-        // });
-
-        // test.on('error',(err)=>{
-        //     logger.error(err);
-        //     process.exit(1);
-        // });
-        // test.on('log',(log)=>{
-        //     logger.info(log);
-        // });
-        // test.on('delete',(message)=>{
-        //     logger.info("Delete Tweet",message);
-        // });
-        // test.on('scrubgeo',(message)=>{
-        //     logger.info("Scrub Geo on Tweet",message);            
-        // });
-        // test.on('message',(message)=>{
-        //     logger.verbose('Message received',message.id_str);
-        //     //normalise into message format
-        //     let newmessage = {};
-
-        //     newmessage.message_id = message.id_str;
-        //     newmessage._raw = message;
-
-        //     newmessage.text = message.text;
-        //     newmessage.service = 'twitter';
-        //     newmessage.createdAt = new Date(message.created_at);
-        //     newmessage.entities = message.entities;
-        //     newmessage.user = message.user.id;
-        //     newmessage.lang = message.lang;
-        //     newmessage.replyto = message.in_reply_to_status_id;
-
-        //     // logger.verbose(JSON.stringify(newmessage));
-
-        //     //publish to redis pubsub
-        //     redis.publish('messages', JSON.stringify(newmessage));
-        // });
-        // test.start();
-
-
-        //TODO: fill in above hardcoded logic for below
-
         logger.info('Created Client List for ' + courses.length + ' clients');             
         // Start a twitter receiver for each of the accounts
         for (let course of courses) {
@@ -173,11 +123,12 @@ module.exports = async function()
                 newmessage.service = 'twitter';
                 newmessage.createdAt = new Date(message.created_at);
                 newmessage.entities = message.entities;
-                newmessage.user = message.user.id;
+                newmessage.user_from = message.user;
                 newmessage.lang = message.lang;
-                newmessage.replyto = message.in_reply_to_status_id;
-
-                // logger.verbose(JSON.stringify(newmessage));
+                if (message.in_reply_to_status_id_str)
+                    newmessage.replyto = message.in_reply_to_status_id_str;
+                if (message.retweeted_status)
+                    newmessage.remessageto = message.retweeted_status.id_str;
 
                 //publish to redis pubsub
                 redis.publish('messages', JSON.stringify(newmessage));
