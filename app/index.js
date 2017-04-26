@@ -1,7 +1,8 @@
 let winston = require('winston');
 let logger = new winston.Logger();
 let loggly = require('winston-loggly-bulk');
-let Redis = require("ioredis");
+// let Redis = require("ioredis");
+let fivebeans = require('fivebeans');
 let TwitterReceiver = require('./twitter_receiver');
 let request = require('request-promise-native');
 let yaml = require('js-yaml');
@@ -22,7 +23,7 @@ module.exports = async function()
         logger.add(winston.transports.Loggly, {
             subdomain: process.env.LOGGLY_API_DOMAIN,
             token:process.env.LOGGLY_API_KEY,
-            tags:['filingcabinet'],
+            tags:['filingcabinet','twitter'],
             level:'error',
             json: true,
             handleExceptions: true,
@@ -32,17 +33,34 @@ module.exports = async function()
 
         logger.info('Filing Cabinet - Twitter Started'); 
 
-        // redis connection
-        let redis = new Redis(process.env.REDIS_PORT, process.env.REDIS_HOST);
-        
-        redis.on('connect', function () {
-            logger.info('Redis Connected');        
+        let beanstalk = new fivebeans.client(process.env.BEANSTALK_SERVER, 11300);
+        beanstalk.on('error', function(err)
+        {
+            logger.error(err);
+        })
+        .on('close', function()
+        {
+            logger.error("Beanstalk Closed");            
         });
 
-        redis.on('error', function (error) {
-            logger.error(error);        
+        await new Promise((resolve, reject)=>{
+            beanstalk.on('connect', function()
+            {
+                resolve();
+            })
+            .connect();
         });
 
+        let tubename = await new Promise((resolve, reject)=>{
+            beanstalk.use('messages', function(err, tubename) {
+                if (err)
+                    reject(err);
+                else
+                    resolve(tubename);
+            });
+        });
+
+        logger.info('Connected to Beanstalk');
 
         // DB Access
         let OrientDB = require('orientjs');
@@ -128,10 +146,16 @@ module.exports = async function()
                 if (message.in_reply_to_status_id_str)
                     newmessage.replyto = message.in_reply_to_status_id_str;
                 if (message.retweeted_status)
-                    newmessage.remessageto = message.retweeted_status.id_str;
+                    newmessage.remessageto = message.retweeted_status;
 
                 //publish to redis pubsub
-                redis.publish('messages', JSON.stringify(newmessage));
+                // redis.publish('messages', JSON.stringify(newmessage));
+                let msg= JSON.stringify({type:'message',payload:newmessage});
+                beanstalk.put(10, 0, 50000000, msg, function(err, jobid) {
+                        // console.log(jobid);
+                    if (err)
+                        logger.error(err);
+                });
             });
             tmp.on('delete',(message)=>{
                 logger.info("Delete Tweet",message);

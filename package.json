@@ -11,7 +11,6 @@
     "url": "ssh://git@openlab.ncl.ac.uk:17150/connected-academy/filingcabinet-twitter.git"
   },
   "dependencies": {
-    "ioredis": "2.5.0",
     "winston": "2.3.1",
     "winston-loggly-bulk": "1.4.1",
     "node-vault":"0.5.6",
@@ -20,7 +19,8 @@
     "request-promise-native":"1.0.3",
     "js-yaml": "3.8.2",
     "lodash": "4.17.4",
-    "orientjs": "2.2.4"
+    "orientjs": "2.2.4",
+    "fivebeans":"1.5.0"
   },
   "author": "Tom Bartindale",
   "license": "MIT"
