@@ -159,6 +159,25 @@ module.exports = async function()
             });
             tmp.on('delete',(message)=>{
                 logger.info("Delete Tweet",message);
+                let newmessage = {};
+                newmessage.message_id = message.id_str;
+                let msg= JSON.stringify({type:'delete',payload:newmessage});
+                beanstalk.put(10, 0, 50000000, msg, function(err, jobid) {
+                        // console.log(jobid);
+                    if (err)
+                        logger.error(err);
+                });
+            });
+            tmp.on('cleargeo',(message)=>{
+                logger.info("Clear Geo on Tweet",message);
+                let newmessage = {};
+                newmessage.message_id = message.id_str;
+                let msg= JSON.stringify({type:'rmgeo',payload:newmessage});
+                beanstalk.put(10, 0, 50000000, msg, function(err, jobid) {
+                        // console.log(jobid);
+                    if (err)
+                        logger.error(err);
+                });
             });
             tmp.on('log',(log)=>{
                 logger.info(log);
