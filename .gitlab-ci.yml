@@ -1,12 +1,12 @@
 image: docker:git
 services:
-- docker:dind
+  - docker:dind
 
 stages:
-- build
-# - test
-- release
-- deploy
+  - build
+  # - test
+  - release
+  - deploy
 
 variables:
   CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_BUILD_REF_NAME
