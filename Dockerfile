@@ -1,7 +1,6 @@
 FROM node:7-alpine
 
-RUN apk --no-cache add git
-RUN npm install -g nodemon
+RUN npm install --silent -g nodemon
 
 RUN mkdir -p /usr/src/app
 
