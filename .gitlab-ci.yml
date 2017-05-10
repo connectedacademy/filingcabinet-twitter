@@ -17,6 +17,8 @@ before_script:
 
 build:
   stage: build
+  tags:
+    - local
   script:
     - docker build -t $CONTAINER_TEST_IMAGE .
     - docker push $CONTAINER_TEST_IMAGE
@@ -28,6 +30,8 @@ build:
 
 release-image:
   stage: release
+  tags:
+    - local
   script:
     - docker pull $CONTAINER_TEST_IMAGE
     - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_RELEASE_IMAGE
