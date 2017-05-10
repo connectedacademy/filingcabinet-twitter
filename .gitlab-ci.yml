@@ -28,13 +28,23 @@ build:
 #   script:
 #     - docker run $CONTAINER_TEST_IMAGE npm test
 
-release-image:
+gitlab-repository:
   stage: release
   tags:
     - local
   script:
     - docker pull $CONTAINER_TEST_IMAGE
     - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_RELEASE_IMAGE
+    - docker push $CONTAINER_RELEASE_IMAGE
+  only:
+    - master
+  
+dockerhub:
+  stage: release
+  tags:
+    - local
+  script:
+    - docker pull $CONTAINER_RELEASE_IMAGE
     - docker push $CONTAINER_RELEASE_IMAGE
   only:
     - master
