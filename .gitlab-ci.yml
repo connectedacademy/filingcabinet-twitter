@@ -41,7 +41,7 @@ dockerhub:
   tags:
     - local
   script:
-    - docker pull $CONTAINER_RELEASE_IMAGE
+    - docker pull $CONTAINER_TEST_IMAGE
     - docker login -u $DOCKER_USERNAME -p "$DOCKER_PASSWORD"
     - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_DOCKERHUB_RELEASE
     - docker push $CONTAINER_DOCKERHUB_RELEASE
