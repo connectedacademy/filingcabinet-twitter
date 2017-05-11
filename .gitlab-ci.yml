@@ -4,7 +4,6 @@ services:
 
 stages:
   - build
-  # - test
   - release
   - deploy
 
@@ -22,11 +21,6 @@ build:
   script:
     - docker build -t $CONTAINER_TEST_IMAGE .
     - docker push $CONTAINER_TEST_IMAGE
-
-# test:
-#   stage: test
-#   script:
-#     - docker run $CONTAINER_TEST_IMAGE npm test
 
 gitlab-repository:
   stage: release
