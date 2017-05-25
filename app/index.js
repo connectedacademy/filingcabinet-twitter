@@ -129,7 +129,7 @@ module.exports = async function()
         // Start a twitter receiver for each of the accounts
         for (let course of courses) {
             let tmp = new TwitterReceiver(course);
-            tmp.on('message',(message) => {
+            tmp.on('message',async (message) => {
                 logger.verbose('Message received',message.id_str);
                 //normalise into message format
                 let newmessage = {};
@@ -144,9 +144,32 @@ module.exports = async function()
                 newmessage.user_from = message.user;
                 newmessage.lang = message.lang;
                 if (message.in_reply_to_status_id_str)
-                    newmessage.replyto = message.in_reply_to_status_id_str;
+                {
+                    try
+                    {
+                        let msg = await tmp.getSingle(message.in_reply_to_status_id_str);
+                        let replytomsg = {};
+                        replytomsg.message_id = msg.id_str;
+                        replytomsg._raw = msg;
+
+                        replytomsg.text = msg.text;
+                        replytomsg.service = 'twitter';
+                        replytomsg.createdAt = new Date(msg.created_at);
+                        replytomsg.entities = msg.entities;
+                        replytomsg.user_from = msg.user;
+                        replytomsg.lang = msg.lang;
+
+                        newmessage.replyto = replytomsg;
+                    }
+                    catch(e)
+                    {
+                        logger.error(e);
+                    }
+                }
                 if (message.retweeted_status)
-                    newmessage.remessageto = message.retweeted_status;
+                    newmessage.remessageto = message.retweeted_status.id_str;
+                if (message.quoted_status)
+                    newmessage.remessageto = message.quoted_status.id_str;
 
                 //publish to redis pubsub
                 // redis.publish('messages', JSON.stringify(newmessage));

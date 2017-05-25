@@ -21,7 +21,6 @@ class TwitterReceiver extends EventEmitter
             access_token_secret: this.config.credentials.tokenSecret
         });
 
-
         this.emit('log','Getting Initial Backlog for ' + this.config.hashtags);
         await this.backlog();
 
@@ -63,6 +62,14 @@ class TwitterReceiver extends EventEmitter
         setTimeout(()=>{
             this.backlog()
         },process.env.BACKLOG_TIMEOUT);
+    }
+
+    async getSingle(id)
+    {
+         var tweet = await this.client.get('statuses/show/',{
+             id:id
+         });
+         return tweet;
     }
 
     async backlog()
