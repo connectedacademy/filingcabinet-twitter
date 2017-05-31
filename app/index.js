@@ -1,12 +1,11 @@
 let winston = require('winston');
 let logger = new winston.Logger();
-let loggly = require('winston-loggly-bulk');
-// let Redis = require("ioredis");
 let fivebeans = require('fivebeans');
 let TwitterReceiver = require('./twitter_receiver');
 let request = require('request-promise-native');
 let yaml = require('js-yaml');
 let _ = require('lodash');
+let os = require('os');
 global.logger = logger;
 
 module.exports = async function()
@@ -20,15 +19,20 @@ module.exports = async function()
             humanReadableUnhandledException: true
         });
 
-        logger.add(winston.transports.Loggly, {
-            subdomain: process.env.LOGGLY_API_DOMAIN,
-            token:process.env.LOGGLY_API_KEY,
-            tags:['filingcabinet','twitter'],
-            level:'error',
-            json: true,
-            handleExceptions: true,
-            humanReadableUnhandledException: true
-        });
+        //REMOTE LOGGING
+        if (!process.env.CI && process.env.NODE_ENV=='production')
+        {
+            let winstonAwsCloudWatch = require('winston-cloudwatch');
+            logger.on('error',(err)=>{
+                console.log(err);
+            });
+            logger.add(winstonAwsCloudWatch, {
+                logGroupName: 'ConnectedAcademyAPI',
+                logStreamName:'filingcabinet_twitter-'+ os.hostname(),
+                awsRegion: process.env.AWS_DEFAULT_REGION,
+                jsonMessage: true
+            });
+        }
 
 
         logger.info('Filing Cabinet - Twitter Started'); 
