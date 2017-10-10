@@ -28,7 +28,7 @@ module.exports = async function()
             });
             logger.add(winstonAwsCloudWatch, {
                 logGroupName: 'ConnectedAcademyAPI',
-                logStreamName:'filingcabinet_twitter-'+ os.hostname(),
+                logStreamName:'filingcabinet_twitter',
                 awsRegion: process.env.AWS_DEFAULT_REGION,
                 jsonMessage: true
             });
