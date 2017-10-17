@@ -6,6 +6,7 @@ networks:
 services:
   fc-twitter:
     build: .
+    image: connectedacademy/filingcabinet-twitter
     volumes:
       - ./app:/usr/src/app/app
       - ./test:/usr/src/app/test:ro

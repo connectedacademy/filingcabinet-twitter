@@ -20,7 +20,8 @@
     "js-yaml": "3.8.2",
     "lodash": "4.17.4",
     "orientjs": "2.2.4",
-    "fivebeans":"1.5.0"
+    "fivebeans":"1.5.0",
+    "winston-logzio":"1.0.3"
   },
   "author": "Tom Bartindale",
   "license": "MIT"

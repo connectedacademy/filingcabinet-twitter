@@ -74,7 +74,7 @@ class TwitterReceiver extends EventEmitter
 
     async backlog()
     {
-        this.emit('log','Processing backlog');
+        this.emit('log','Processing backlog for '+ this.config.hashtags);
         try
         {
             //go back in time and get the backlog for this seach term
