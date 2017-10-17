@@ -1,4 +1,4 @@
-# Filing Cabinet Twitter
+# Twitter Service (filingcabinet-twitter)
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/connectedacademy/filingcabinet-twitter.svg)](https://hub.docker.com/r/connectedacademy/filingcabinet-twitter/)
 
@@ -38,3 +38,6 @@ replyto
 remessageto
 lang
 ```
+
+----
+This project is part of the [Connected Academy](https://connectedacademy.io) online learning platform developed by [Open Lab](https://openlab.ncl.ac.uk) @ Newcastle University
