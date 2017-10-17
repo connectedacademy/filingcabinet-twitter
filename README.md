@@ -26,7 +26,7 @@ On Startup it:
 - For each message that comes in from Twitter, the format is normalised and published to a beanstalk queue.
 
 Messages are in the following format:
-```
+```json
 message_id
 _raw
 text
