@@ -1,8 +1,17 @@
 # Filing Cabinet Twitter
 
-NodeJS script which monitors Twitter and pushes incoming and batch received messages into beanstalk queue based on search tags from GitHub and credentials from OrientDB.
+[![Docker Pulls](https://img.shields.io/docker/pulls/connectedacademy/filingcabinet-twitter.svg)](https://hub.docker.com/r/connectedacademy/filingcabinet-twitter/)
 
-Designed to be run as a single instance.
+Application to monitors Twitter and push incoming and batch received messages into beanstalk queue based on search tags from GitHub and credentials from OrientDB.
+
+On Startup it:
+
+- Retrieves a YAML specficiation from the given URL.
+- Queries OrientDB for the specified user and their credentials
+- Uses these credentials to start a Twitter client
+- Queries the previous backlog of messages, then starts a listener on new messages for the hashtag specified in the spec.
+
+> MUST BE THE ONLY INSTANCE RUNNING, AS TWITTER WILL BLOCK MULTIPLE STREAMING CONNECTIONS
 
 ## Deployment
 
@@ -27,4 +36,5 @@ entities
 user_from
 replyto
 remessageto
+lang
 ```
