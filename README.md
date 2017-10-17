@@ -13,10 +13,6 @@ On Startup it:
 
 > MUST BE THE ONLY INSTANCE RUNNING, AS TWITTER WILL BLOCK MULTIPLE STREAMING CONNECTIONS
 
-## Deployment
-
-`docker-compose up -d`
-
 ## Operation
 
 - Main GitHub repo is accessed to get course list
